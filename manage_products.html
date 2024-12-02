@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المنتجات</title>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
+   <style>
+    body {
+        font-family: Arial, sans-serif;
+        direction: rtl;
+        background-image: url('market.png');
+        background-size: cover;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        color: white;
+    }
+
+    h1 {
+        text-align: center;
+        margin-top: 50px;
+        font-size: 36px;
+    }
+
+    #categories-buttons {
+        text-align: center;
+        margin-top: 30px;
+    }
+
+    #categories-buttons button {
+        padding: 15px 25px;
+        margin: 10px;
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+
+    #categories-buttons button:hover {
+        background-color: #45a049;
+    }
+
+    #products-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        margin-top: 30px;
+    }
+
+    .product {
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 20px;
+        margin: 15px;
+        width: 250px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s;
+        color: #fff;
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .product:hover {
+        transform: scale(1.05);
+    }
+
+    .product img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+
+    .product .product-details {
+        margin-bottom: 15px;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    .product button {
+        margin-top: 15px;
+        padding: 10px 20px;
+        background-color: red;
+        border: none;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 5px;
+        align-self: center;
+        width: 100%;
+    }
+
+    .product button:hover {
+        background-color: #d32f2f;
+    }
+
+    .product-video {
+    width: 100%;
+    max-width: 100%;
+    height: 200px; /* تحديد ارتفاع ثابت للفيديو */
+    margin-top: 10px;
+    background-color: #333;
+    overflow: hidden;
+    border-radius: 5px; /* إضافة حواف دائرية للفيديو لتتناسب مع تصميم الكارت */
+}
+
+.product-video video {
+    width: 100%;
+    height: 100%; /* جعل الفيديو يملأ المساحة داخل العنصر */
+    object-fit: cover; /* لضمان أن الفيديو يتم تكبيره أو تقليصه بشكل صحيح داخل العنصر دون تشويه */
+}
+
+
+    .product .product-details strong {
+        font-weight: bold;
+    }
+
+    .product .product-details p {
+        margin: 5px 0;
+    }
+
+</style>
+
+</head>
+<body>
+
+    <h1>إدارة المنتجات</h1>
+
+    <div id="categories-buttons"></div>
+
+    <div id="products-list"></div>
+
+    <script>
+        // إعداد Firebase باستخدام إعداداتك
+        var firebaseConfig = {
+            apiKey: "AIzaSyCXo5Z8-6bYuIz85Ukn8d4zhbyrhT27dOs",
+            authDomain: "create-account-db8b3.firebaseapp.com",
+            databaseURL: "https://create-account-db8b3-default-rtdb.firebaseio.com",
+            projectId: "create-account-db8b3",
+            storageBucket: "create-account-db8b3.firebasestorage.app",
+            messagingSenderId: "503226376419",
+            appId: "1:503226376419:web:c13a4b9f0265498229e5d6",
+            measurementId: "G-PEG3QS6ME0"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var database = firebase.database();
+
+        // دالة لعرض التصنيفات
+        function loadCategories() {
+            var categoriesRef = database.ref("products");
+            categoriesRef.once("value", function(snapshot) {
+                var categories = {};
+                snapshot.forEach(function(childSnapshot) {
+                    var category = childSnapshot.val().category;
+                    if (!categories[category]) {
+                        categories[category] = true;
+                    }
+                });
+
+                // إضافة أزرار التصنيفات
+                var categoriesButtons = document.getElementById("categories-buttons");
+                for (var category in categories) {
+                    var button = document.createElement("button");
+                    button.innerHTML = category;
+                    button.onclick = function() {
+                        loadProductsByCategory(category);
+                    };
+                    categoriesButtons.appendChild(button);
+                }
+            });
+        }
+
+        // دالة لعرض المنتجات حسب التصنيف
+        function loadProductsByCategory(category) {
+            var productsRef = database.ref("products");
+            productsRef.orderByChild("category").equalTo(category).on("value", function(snapshot) {
+                var productsList = document.getElementById("products-list");
+                productsList.innerHTML = ""; // مسح القائمة القديمة
+                snapshot.forEach(function(childSnapshot) {
+                    var product = childSnapshot.val();
+                    var productDiv = document.createElement("div");
+                    productDiv.classList.add("product");
+
+                    // عرض تفاصيل المنتج
+                    productDiv.innerHTML = `
+                        <div class="product-details">
+                            <strong>اسم المنتج:</strong> ${product.name}<br>
+                            <strong>الوصف:</strong> ${product.description}<br>
+                            <strong>السعر:</strong> ${product.price} ريال<br>
+                            <strong>التصنيف:</strong> ${product.category}<br>
+                        </div>
+                        <div>
+                            <strong>الصور:</strong><br>
+                            ${product.images ? product.images.map(image => `<img src="${image}" alt="product image">`).join('') : ''}
+                        </div>
+                        <div>
+                            <strong>الفيديوهات:</strong><br>
+                            ${product.videos ? product.videos.map(video => `<div class="product-video"><video controls><source src="${video}" type="video/mp4"></video></div>`).join('') : ''}
+                        </div>
+                        <button onclick="deleteProduct('${childSnapshot.key}')">حذف المنتج</button>
+                    `;
+                    productsList.appendChild(productDiv);
+                });
+            });
+        }
+
+        // دالة لحذف المنتج
+        // دالة لحذف المنتج
+function deleteProduct(productId) {
+    if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+        var productRef = database.ref("products/" + productId);
+        productRef.remove()
+            .then(function() {
+                alert("تم حذف المنتج بنجاح.");
+                loadProductsByCategory(); // إعادة تحميل المنتجات بعد الحذف
+            })
+            .catch(function(error) {
+                alert("حدث خطأ أثناء حذف المنتج: " + error.message);
+            });
+    }
+}
+
+
+        // تحميل التصنيفات عند تحميل الصفحة
+        window.onload = function() {
+            loadCategories();
+        };
+    </script>
+
+</body>
+</html>
