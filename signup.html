@@ -76,6 +76,7 @@
             <input type="text" id="name" placeholder="الاسم الكامل" required>
             <input type="text" id="phone" placeholder="رقم الهاتف" required>
             <input type="text" id="address" placeholder="العنوان" required>
+            <input type="text" id="email" placeholder="البريد الالكتروني (اختياري)"> 
             <input type="password" id="password" placeholder="كلمة المرور" required>
             <button type="submit">إنشاء حساب</button>
         </form>
@@ -103,6 +104,7 @@
             const phone = document.getElementById("phone").value;
             const address = document.getElementById("address").value;
             const password = document.getElementById("password").value;
+	    const email = document.getElementById("email").value;
 
             // إضافة البيانات إلى Firebase Realtime Database
             const userRef = firebase.database().ref('users/' + phone); // استخدام الهاتف كمفتاح فريد
@@ -110,7 +112,8 @@
                 name: name,
                 phone: phone,
                 address: address,
-                password: password
+                password: password,
+                email:email
             }).then(() => {
                 alert("تم إنشاء الحساب بنجاح!");
                 window.location.href = "login.html";
