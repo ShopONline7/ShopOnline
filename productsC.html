@@ -3,8 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<button onclick="window.location.href='https://www.facebook.com/share/p/1ELTSRkBCf/'">راسلنا</button>
-    
+    <a href="https://www.facebook.com/share/p/1ELTSRkBCf/" style="cursor: pointer;">
+        <img src="call.png" alt="Call Icon" style="width: 40px; height: 40px; cursor: pointer;">
+    </a>
+    <a href="cart.html" id="cartLink" style="position: fixed; top: 20px; left: 20px; display: inline-block; z-index: 1000;">
+    <img id="cartIcon" src="cart.png" alt="سلة المشتريات" style="width: 50px; height: 50px; cursor: pointer;">
+    <span id="cartNotification" style="position: absolute; top: -10px; right: -10px; background-color: red; color: white; border-radius: 50%; padding: 5px 10px; font-size: 12px;">0</span>
+</a>
+
+
+
+
 
     <title>المنتجات</title>
     <link rel="icon" href="marketlogo.png" type="image/png">
@@ -100,6 +109,13 @@
         .fullscreen-img:target {
             display: flex;
         }
+.more-btn {
+    font-size: 12px; /* تصغير حجم النص */
+    padding: 5px 15px; /* تقليص المسافة داخل الزر */
+    width: 80px; /* تحديد عرض الزر */
+    border-radius: 5px; /* جعل الزر أكثر استدارة */
+}
+
 	.search-bar {
     margin-bottom: 20px;
     width: 100%;
@@ -108,6 +124,10 @@
     border: 1px solid #ccc;
     border-radius: 5px;
 }
+	.full-description {
+    display: none;
+}
+
     </style>
 </head>
 <body>
@@ -145,6 +165,21 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+	function toggleDescription(button) {
+    const shortDescription = button.previousElementSibling.querySelector('.short-description');
+    const fullDescription = button.previousElementSibling.querySelector('.full-description');
+    
+    // إذا كان الوصف الكامل مخفيًا، عرضه والعكس
+    if (fullDescription.style.display === "none") {
+        fullDescription.style.display = "inline";
+        shortDescription.style.display = "none";
+        button.textContent = "أخفِ";
+    } else {
+        fullDescription.style.display = "none";
+        shortDescription.style.display = "inline";
+        button.textContent = "المزيد";
+    }
+}
         // دالة لتحميل المنتجات الخاصة بالتسمية الموجودة في URL
         function loadProducts(categoryName) {
             const productsRef = database.ref('products');
@@ -160,7 +195,11 @@
                             <strong>${product.name}</strong> - ${product.price} ريال
                             <div class="details">
                                 <p>تصنيف: ${product.category}</p>
-				<p>${product.description}</p>
+    <p>
+        <span class="short-description">${product.description.substring(0, 100)}...</span>
+        <span class="full-description" style="display: none;">${product.description}</span>
+    </p>
+    <button class="more-btn" onclick="toggleDescription(this)">المزيد</button>
                                 <div> <div style="display: flex; flex-wrap: wrap;">${imagesHtml}</div></div>
                                 <div> <div style="display: flex; flex-wrap: wrap;">${videosHtml}</div></div>
                                 <!-- إضافة حقل إدخال لاختيار عدد المنتج -->
@@ -181,6 +220,30 @@
             document.getElementById('categoryName').textContent = categoryName;
             loadProducts(categoryName);  // تحميل المنتجات من التصنيف المحدد
         }
+	// دالة لتحميل عدد المنتجات في سلة المشتريات
+// دالة لتحميل عدد المنتجات في سلة المشتريات بشكل تلقائي
+function updateCartNotification() {
+    const ordersRef = database.ref('orders');
+    ordersRef.on('value', (snapshot) => {
+        const orders = snapshot.val() || [];
+        let totalQuantity = 0;
+
+        // حساب إجمالي الكميات في جميع الطلبات
+        Object.values(orders).forEach(order => {
+            totalQuantity += parseInt(order.quantity);
+        });
+
+        // تحديث الإشعار في سلة المشتريات
+        const cartNotification = document.getElementById('cartNotification');
+        cartNotification.textContent = totalQuantity;
+    });
+}
+
+// استدعاء دالة تحديث الإشعار عند تحميل الصفحة
+window.onload = function() {
+    updateCartNotification();
+};
+
 
         // دالة لشراء المنتج بناءً على رقم الهاتف المحفوظ في localStorage
         function purchaseProduct(productKey) {
