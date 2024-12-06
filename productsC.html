@@ -230,6 +230,7 @@ video {
     </p>
     <button class="more-btn" onclick="toggleDescription(this)">المزيد</button>
                                 <div> <div style="display: flex; flex-wrap: wrap;">${imagesHtml}</div></div>
+				<p> فيديو المنتح : </p>
                                 <div> <div style="display: flex; flex-wrap: wrap;">${videosHtml}</div></div>
                                 <!-- إضافة حقل إدخال لاختيار عدد المنتج -->
 				<p>الكمية:</p>
@@ -274,7 +275,16 @@ function showVideo(videoUrl) {
     // إغلاق وضع ملء الشاشة عند النقر خارج الفيديو
     fullscreen.onclick = () => {
         document.body.removeChild(fullscreen);
+        history.pushState(null, '', window.location.href);  // إعادة الحالة للموقع الحالي
     };
+
+    // التحقق من حدث الرجوع (زر الرجوع في المتصفح)
+    window.onpopstate = () => {
+        document.body.removeChild(fullscreen);
+    };
+
+    // إضافة الحالة للتاريخ عندما يتم عرض الفيديو في وضع ملء الشاشة
+    history.pushState(null, '', window.location.href);
 
     fullscreen.appendChild(video);
     document.body.appendChild(fullscreen);
